@@ -18,6 +18,16 @@ async function retry(endpoint, n=10) {
     throw new Error(`Failed retrying ${n} times`);
 }
 
+async function retryPost(endpoint, response, n=10) {
+    for (let i = 0; i < n; i++) {
+        try {
+            return axios.post(endpoint, response)
+        } catch {}
+    }
+
+    throw new Error(`Failed retrying ${n} times`);
+}
+
 function findMatchResults(text, subTexts) {
     let textToSearch = text.toLowerCase();
     let matchResults = [];
@@ -57,13 +67,11 @@ function findMatchResults(text, subTexts) {
     response['text'] = textToParse;
     response['results'] = results;
 
-    axios
-        .post(submitEndpoint, response)
-        .then(res => {
-            console.log(`status: ${res.statusText}`)
-        })
-        .catch(error => {
-            console.error(error)
-        })
+    try {
+        const submitResult = await retryPost(submitEndpoint, response);
+        console.log(`status: ${submitResult.statusText}`)
+    } catch (err) {
+        console.error(err);
+    }
 
 })()
